@@ -1,0 +1,522 @@
+
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Jumanji FL – Jungle/Zurich FIX</title>
+<style>
+:root{
+  --zurich:#0f69b4; --zurich-dark:#0b4e85; --accent:#00a1e0; --gold:#f5c451;
+  --bg:#071423; --panel:#0b1628; --text:#e6f0fa; --muted:#a7c4de;
+  --do:#e53935; --crime:#1e88e5; --cyber:#f59e0b; --rc:#8e24aa;
+  --inter:#ef4444; --azar:#fdd835; --case:#38bdf8;
+  --ok:#10b981; --err:#ef4444; --btn:#0f69b4;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;
+background:
+  radial-gradient(1200px 700px at 20% -10%, #0a1c33 0%, #081529 48%, var(--bg) 70%),
+  linear-gradient(140deg, rgba(0,161,224,.08), rgba(255,255,255,0) 40%),
+  linear-gradient(320deg, rgba(15,105,180,.12), rgba(255,255,255,0) 45%);
+}
+.wrapper{max-width:1200px;margin:24px auto;padding:16px}
+h1{margin:0 0 4px;font-weight:800;letter-spacing:.2px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .tag{background:linear-gradient(180deg,var(--zurich),var(--zurich-dark));border:1px solid rgba(255,255,255,.15);padding:6px 10px;border-radius:999px;font-size:12px;color:#e6f4ff}
+.sub{color:var(--muted);margin:0 0 14px}
+.panel{background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:12px; box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{background:linear-gradient(180deg,var(--btn),var(--zurich-dark));color:#fff;border:0;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select{background:#071a30;border:1px solid rgba(255,255,255,.12);color:var(--text);padding:8px 10px;border-radius:8px}
+.badge{display:inline-flex;gap:6px;align-items:center;background:#0a1a2d;color:#fff;padding:6px 10px;border-radius:999px;font-weight:700;border:1px solid rgba(255,255,255,.08)}
+.small{color:var(--muted);font-size:12px}
+.dot{width:12px;height:12px;border-radius:50%}
+.legend .badge{background:#0c1f36}
+#boardWrap{position:relative;overflow:hidden}
+.wood{position:absolute; inset:6px; border-radius:18px; z-index:0;
+background:radial-gradient(800px 400px at 10% 0%, rgba(255,255,255,.06), transparent 50%),
+linear-gradient(90deg, rgba(100,65,30,.08), rgba(255,255,255,.02) 40%, rgba(60,40,20,.12)),
+repeating-linear-gradient(90deg, rgba(145,98,52,.12) 0 6px, rgba(98,62,28,.12) 6px 12px);
+box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), inset 0 0 40px rgba(0,0,0,.35)}
+svg{position:relative;z-index:1;width:100%;height:auto;border-radius:16px;display:block;background:linear-gradient(180deg,#0b1930 0%, #0a1529 100%);border:1px solid rgba(255,255,255,.06)}
+.trackLabel{font-size:12px;fill:var(--muted);font-weight:800}
+.cell{cursor:pointer;transition:.12s transform}
+.cell:hover{transform:scale(1.06)}
+.token{stroke:#091525;stroke-width:2}
+.caseMark{stroke:var(--case);stroke-width:2;fill:none;stroke-dasharray:4 3}
+.azarMark{stroke:var(--azar);stroke-width:2;fill:none;stroke-dasharray:4 3}
+.interMark{stroke:var(--gold);stroke-width:2;fill:none}
+.tip{font-size:10px;fill:#ffffff;opacity:.85;font-weight:800;text-shadow:0 1px 0 rgba(0,0,0,.6)}
+hr{border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0}
+.modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.6);padding:16px;z-index:50}
+.modalInner{width:min(840px,96vw);background:rgba(10,20,36,.98);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.qHeader{display:flex;justify-content:space-between;align-items:center}
+.opts{display:grid;gap:8px;margin:10px 0}
+.optBtn{background:#0b1d33;border:1px solid rgba(255,255,255,.1);padding:10px;border-radius:10px;text-align:left;color:#e5f2ff}
+.optBtn.correct{outline:2px solid var(--ok)}
+.optBtn.wrong{outline:2px solid var(--err)}
+.timer{background:#0c213b;color:#fff;padding:6px 10px;border-radius:999px;font-variant-numeric:tabular-nums}
+.feedback{color:var(--muted);margin-top:4px}
+.mute{background:linear-gradient(180deg,#0ea5e9,#0284c7)}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="brand">
+    <h1>Jumanji FL · Jungle/Zurich</h1>
+    <span class="tag">Zurich Edition</span>
+  </div>
+  <p class="sub">Tablero serpenteante con cruces/intersecciones · Casos y Azar · D&O · Crime · Cyber · RC Profesional</p>
+  <div class="panel">
+    <div class="row">
+      <button id="btnRoll">🎲 Tirar dado</button>
+      <span class="badge">Número: <strong id="rollNum">-</strong></span>
+      <button id="btnOpenQ" disabled>📜 Abrir pregunta</button>
+      <button id="btnResolve" disabled>✅ Aplicar resultado</button>
+      <button id="btnNext" disabled>➡️ Terminar turno</button>
+      <button id="btnExport">⬇️ Exportar CSV</button>
+      <button id="btnSound" class="mute">🔊 Música</button>
+      <span class="small">Turno de: <b id="turnTeam">Equipo A</b></span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label>Timer (s) <input id="inTimer" type="number" value="45" min="10" max="120" style="width:80px"></label>
+      <label>Equipo A <input id="nameA" value="Equipo A" style="width:140px"></label>
+      <label>Equipo B <input id="nameB" value="Equipo B" style="width:140px"></label>
+      <label>Equipo C <input id="nameC" value="Equipo C" style="width:140px"></label>
+      <label>Equipo D <input id="nameD" value="Equipo D" style="width:140px"></label>
+      <button id="btnApplyNames">Aplicar nombres</button>
+    </div>
+    <div class="row legend" style="margin-top:8px">
+      <span class="badge"><span class="dot" style="background:var(--do)"></span>D&O</span>
+      <span class="badge"><span class="dot" style="background:var(--crime)"></span>Crime</span>
+      <span class="badge"><span class="dot" style="background:var(--cyber)"></span>Cyber</span>
+      <span class="badge"><span class="dot" style="background:var(--rc)"></span>RC Profesional</span>
+      <span class="badge"><span class="dot" style="background:var(--inter)"></span>Intersección</span>
+      <span class="badge"><span class="dot" style="background:var(--azar)"></span>Azar</span>
+      <span class="badge"><span class="dot" style="background:var(--case)"></span>Caso</span>
+      <span class="small">Casos en 3 y 12 · Azar en 5, 14, 22 · Intersecciones en 9, 17, 23</span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge"><span class="dot" style="background:#22c55e"></span><b id="bA">Equipo A</b>: <span id="scA">0</span></span>
+      <span class="badge"><span class="dot" style="background:#60a5fa"></span><b id="bB">Equipo B</b>: <span id="scB">0</span></span>
+      <span class="badge"><span class="dot" style="background:#f59e0b"></span><b id="bC">Equipo C</b>: <span id="scC">0</span></span>
+      <span class="badge"><span class="dot" style="background:#ef4444"></span><b id="bD">Equipo D</b>: <span id="scD">0</span></span>
+      <span class="small">Posiciones: A:<span id="posA">1</span> B:<span id="posB">1</span> C:<span id="posC">1</span> D:<span id="posD">1</span></span>
+    </div>
+  </div>
+
+  <div id="boardWrap" class="panel" style="margin-top:14px">
+    <div class="wood" aria-hidden="true"></div>
+    <svg id="board" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="modal">
+  <div class="modalInner">
+    <div class="qHeader">
+      <h3 id="qTitle">Pregunta</h3>
+      <div class="row">
+        <span class="badge">Responder por: <select id="selProd"></select></span>
+        <span class="timer" id="timer">--</span>
+        <button id="closeModal">Cerrar</button>
+      </div>
+    </div>
+    <div class="small" id="qMeta"></div>
+    <hr/>
+    <div id="qText"></div>
+    <div class="opts">
+      <button class="optBtn" id="optA"></button>
+      <button class="optBtn" id="optB"></button>
+      <button class="optBtn" id="optC"></button>
+    </div>
+    <div class="feedback" id="qFb"></div>
+    <div class="small" id="postRule"></div>
+  </div>
+</div>
+
+<script>
+/* ===== AUDIO ===== */
+const AudioSys = (()=> {
+  let ctx, bgNodes=[], bgOn=false;
+  function ensure(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); }
+  function beep(freq=880,dur=0.2, type='sine', gain=0.2){
+    ensure(); const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=gain;
+    o.connect(g).connect(ctx.destination); o.start();
+    setTimeout(()=>{ g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.18); }, dur*700);
+    setTimeout(()=>{ o.stop(); }, dur*1000);
+  }
+  function chord(tones=[220,277,330], gain=0.012){
+    ensure(); const gs=ctx.createGain(); gs.gain.value=gain; gs.connect(ctx.destination);
+    const osc=tones.map(f=>{ const o=ctx.createOscillator(); o.type='sine'; o.frequency.value=f; o.connect(gs); o.start(); return o; });
+    return {osc, gs};
+  }
+  function bgStart(){
+    if(bgOn) return; ensure();
+    const a=chord([196,247,294]); const b=chord([220,277,330]);
+    b.gs.gain.value=0.0; bgNodes=[a,b]; bgOn=true;
+    let up=true; const id=setInterval(()=>{
+      if(!bgOn){ clearInterval(id); return; }
+      a.gs.gain.linearRampToValueAtTime(up?0.016:0.0, ctx.currentTime+4);
+      b.gs.gain.linearRampToValueAtTime(up?0.0:0.016, ctx.currentTime+4);
+      up=!up;
+    }, 4500);
+  }
+  function bgStop(){ if(!bgOn) return; bgNodes.forEach(n=>{ try{ n.gs.gain.value=0; n.osc.forEach(o=>o.stop()); }catch{} }); bgNodes=[]; bgOn=false; }
+  return { success(){ beep(880,0.15,'triangle',0.18); setTimeout(()=>beep(1200,0.18,'triangle',0.18),140); },
+           error(){ beep(180,0.28,'sawtooth',0.22); setTimeout(()=>beep(150,0.2,'sine',0.15),120); },
+           toggleBg(){ if(!bgOn){ bgStart(); return true;} bgStop(); return false; } };
+})();
+
+/* ===== BANCO DE PREGUNTAS (muestras; puedes ampliar) ===== */
+const mk=(Producto,Categoria,Pregunta,A,B,C,Resp,Fb)=>({Producto,Categoria,Pregunta,A,B,C,Resp,Fb});
+const bank=[
+  // D&O
+  mk("D&O","Conceptual","¿Cuál es el objetivo principal de una póliza de D&O?","Proteger bienes personales y de la empresa por reclamos","Cubrir daños materiales","Asegurar vehículos corporativos","A","Protege a directores/funcionarios ante pérdidas financieras por actos incorrectos."),
+  mk("D&O","Conceptual","¿Quiénes pueden presentar reclamaciones en D&O?","Solo empleados","Empleados, accionistas, reguladores, clientes, proveedores, competidores; incluso la propia compañía","Solo accionistas","B","El espectro de reclamantes es amplio."),
+  mk("D&O","Conceptual","Rango típico de sumas aseguradas","USD 100k–500k","USD 1M–15M","USD 10M–50M","B","Capacidad local neta de USD 1M a 15M."),
+  mk("D&O","Caso","CASO: Ocultamiento de info relevante previo a emisión de acciones.","Cubre todo","No cubre por dolo probado","Cubre defensa hasta aclarar dolo","C","Defensa cubierta mientras no haya sentencia firme por dolo."),
+  // Crime
+  mk("Crime","Conceptual","¿Qué protege una póliza de Crime?","Pérdidas por fraude/robo/actos deshonestos","Daños por incendio","Fluctuación cambiaria","A","Cubre delitos internos y externos."),
+  mk("Crime","Conceptual","¿Se cubren transferencias electrónicas fraudulentas?","Sí (si derivan de fraude cubierto)","No, nunca","Solo con Cyber","A","Sujeto a condiciones."),
+  mk("Crime","Caso","CASO: Empleado manipula transferencias para desviar fondos.","Cubre pérdidas y gastos legales","No cubre nada","Solo si hay Cyber","A","Fraude interno típico."),
+  // Cyber
+  mk("Cyber","Conceptual","¿Cubre ransomware?","Sí, incluso rescate (condiciones)","No","Solo con antivirus","A","Incluye restauración de datos."),
+  mk("Cyber","Conceptual","¿Incluye notificación a afectados?","Sí","No","Solo con endoso","A","Obligaciones de privacidad."),
+  mk("Cyber","Caso","CASO: Ataque detiene operaciones 5 días.","Interrupción de negocio cubierta","No cubre","Solo si dura 7+ días","A","Pérdida de ingresos + gastos."),
+  // RC Profesional
+  mk("RC Profesional","Conceptual","¿Qué protege?","Errores/omisiones en servicios","Daños a la oficina","Robo de bienes","A","Responsabilidad profesional."),
+  mk("RC Profesional","Conceptual","¿Hecha y reportada?","Reclamo hecho y notificado en vigencia","Reclamo previo a la póliza","Reportado 5 años después","A","Cláusula típica."),
+  mk("RC Profesional","Caso","CASO: Abogado redacta contrato inválido.","Cubierto como error profesional","No cubre","Solo si es penal","A","Dentro de alcance profesional.")
+];
+
+const byProduct={
+  "D&O":bank.filter(q=>q.Producto==="D&O"),
+  "Crime":bank.filter(q=>q.Producto==="Crime"),
+  "Cyber":bank.filter(q=>q.Producto==="Cyber"),
+  "RC Profesional":bank.filter(q=>q.Producto==="RC Profesional")
+};
+const cur={"D&O":0,"Crime":0,"Cyber":0,"RC Profesional":0};
+const nextQ=(prod,allowCase=true)=>{
+  const pool=allowCase?byProduct[prod]:byProduct[prod].filter(x=>x.Categoria!=="Caso");
+  const arr=pool.length?pool:byProduct[prod];
+  const q=arr[cur[prod]%arr.length]; cur[prod]++; return q;
+};
+
+/* ===== TABLERO SERPIENTE (SVG) ===== */
+const CASE_SLOTS=[3,12], AZAR_SLOTS=[5,14,22], INTER_SLOTS=[9,17,23];
+const COLORS={"D&O":"var(--do)","Crime":"var(--crime)","Cyber":"var(--cyber)","RC Profesional":"var(--rc)"};
+const interPairs={
+  "D&O":{9:"Crime",17:"Cyber",23:"RC Profesional"},
+  "Crime":{9:"D&O",17:"Cyber",23:"RC Profesional"},
+  "Cyber":{9:"D&O",17:"Crime",23:"RC Profesional"},
+  "RC Profesional":{9:"D&O",17:"Crime",23:"Cyber"}
+};
+
+const board = document.getElementById('board');
+const tracks = ["D&O","Crime","Cyber","RC Profesional"];
+const bandHeight = 180;
+const left = 70, right = 1130, top = 80;
+const cellRadius=16;
+const nodesByTrack = {};
+
+function serpentinePositions(yBase){
+  const cols=5, rows=5;
+  const xMin=left, xMax=right, yMin=yBase, yMax=yBase+bandHeight-50;
+  const xStep=(xMax-xMin)/(cols-1);
+  const yStep=(yMax-yMin)/(rows-1);
+  const pts=[];
+  for(let r=0;r<rows;r++){
+    const rowY=yMin + r*yStep;
+    const xRow = [...Array(cols).keys()].map(c=>xMin + c*xStep);
+    const xs = (r%2===0) ? xRow : xRow.reverse(); // serpiente
+    xs.forEach(x=>pts.push({x, y:rowY}));
+  }
+  return pts;
+}
+
+tracks.forEach((tr, ti)=>{
+  const yBase = top + ti*bandHeight;
+  const pts = serpentinePositions(yBase);
+  nodesByTrack[tr]=pts;
+
+  const label = document.createElementNS("http://www.w3.org/2000/svg","text");
+  label.setAttribute("x", left);
+  label.setAttribute("y", yBase-10);
+  label.setAttribute("class","trackLabel");
+  label.textContent = `Camino ${tr}`;
+  board.appendChild(label);
+
+  let d = `M ${pts[0].x},${pts[0].y}`;
+  for(let i=1;i<pts.length;i++){
+    const p0 = pts[i-1], p1 = pts[i];
+    const mx = (p0.x + p1.x)/2;
+    d += ` Q ${mx},${p0.y} ${p1.x},${p1.y}`;
+  }
+  const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+  path.setAttribute("d", d);
+  path.setAttribute("fill","none");
+  path.setAttribute("stroke", COLORS[tr]);
+  path.setAttribute("stroke-width","6");
+  path.setAttribute("opacity","0.4");
+  board.appendChild(path);
+
+  pts.forEach((p, idx)=>{
+    const n = idx+1;
+    if(CASE_SLOTS.includes(n)){
+      const ring = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      ring.setAttribute("cx",p.x); ring.setAttribute("cy",p.y);
+      ring.setAttribute("r",cellRadius+8); ring.setAttribute("class","caseMark"); board.appendChild(ring);
+    }
+    if(AZAR_SLOTS.includes(n)){
+      const ring = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      ring.setAttribute("cx",p.x); ring.setAttribute("cy",p.y);
+      ring.setAttribute("r",cellRadius+12); ring.setAttribute("class","azarMark"); board.appendChild(ring);
+    }
+    if(INTER_SLOTS.includes(n)){
+      const cross = document.createElementNS("http://www.w3.org/2000/svg","path");
+      cross.setAttribute("d",`M ${p.x-18},${p.y-18} L ${p.x+18},${p.y+18} M ${p.x+18},${p.y-18} L ${p.x-18},${p.y+18}`);
+      cross.setAttribute("class","interMark");
+      board.appendChild(cross);
+    }
+
+    const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    c.setAttribute("cx",p.x); c.setAttribute("cy",p.y);
+    c.setAttribute("r",cellRadius);
+    c.setAttribute("fill","#0b1d33");
+    c.setAttribute("stroke","rgba(255,255,255,.22)");
+    c.setAttribute("stroke-width","2");
+    c.setAttribute("class","cell");
+    c.dataset.track = tr; c.dataset.idx = n;
+    board.appendChild(c);
+
+    const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+    t.setAttribute("x", p.x); t.setAttribute("y", p.y+4);
+    t.setAttribute("text-anchor","middle");
+    t.setAttribute("class","tip");
+    t.textContent = n;
+    board.appendChild(t);
+  });
+});
+
+function placeToken(track, pos, cssClass){
+  const p = nodesByTrack[track][pos-1]; if(!p) return;
+  const tok = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  tok.setAttribute("cx", p.x+14);
+  tok.setAttribute("cy", p.y-14);
+  tok.setAttribute("r", 10);
+  tok.setAttribute("class","token");
+  const col = {tA:"#22c55e",tB:"#60a5fa",tC:"#f59e0b",tD:"#ef4444"}[cssClass]||"#fff";
+  tok.setAttribute("fill", col);
+  tok.dataset.token = cssClass;
+  board.appendChild(tok);
+}
+function clearTokens(){ [...board.querySelectorAll('circle.token')].forEach(e=>e.remove()); }
+
+/* ===== ESTADO / RENDER ===== */
+const teams=[
+  {name:"Equipo A", token:"tA", score:0, current:"D&O", pos:{"D&O":1,"Crime":1,"Cyber":1,"RC Profesional":1}, skip:false},
+  {name:"Equipo B", token:"tB", score:0, current:"Crime", pos:{"D&O":1,"Crime":1,"Cyber":1,"RC Profesional":1}, skip:false},
+  {name:"Equipo C", token:"tC", score:0, current:"Cyber", pos:{"D&O":1,"Crime":1,"Cyber":1,"RC Profesional":1}, skip:false},
+  {name:"Equipo D", token:"tD", score:0, current:"RC Profesional", pos:{"D&O":1,"Crime":1,"Cyber":1,"RC Profesional":1}, skip:false}
+];
+let turn=0, lastRoll=null, awaiting=false, timerId=null, leftToMove=0, chosenProduct=null;
+const rollNum = document.getElementById('rollNum'), turnTeam=document.getElementById('turnTeam');
+const posA=document.getElementById('posA'),posB=document.getElementById('posB'),posC=document.getElementById('posC'),posD=document.getElementById('posD');
+const scA=document.getElementById('scA'),scB=document.getElementById('scB'),scC=document.getElementById('scC'),scD=document.getElementById('scD');
+
+function render(){
+  clearTokens();
+  teams.forEach(tm=> placeToken(tm.current, tm.pos[tm.current], tm.token));
+  posA.textContent=teams[0].pos[teams[0].current]; posB.textContent=teams[1].pos[teams[1].current];
+  posC.textContent=teams[2].pos[teams[2].current]; posD.textContent=teams[3].pos[teams[3].current];
+  scA.textContent=teams[0].score; scB.textContent=teams[1].score; scC.textContent=teams[2].score; scD.textContent=teams[3].score;
+  turnTeam.textContent=teams[turn].name;
+}
+render();
+
+/* ===== CONTROLES ===== */
+const btnRoll=document.getElementById('btnRoll');
+const btnOpenQ=document.getElementById('btnOpenQ');
+const btnResolve=document.getElementById('btnResolve');
+const btnNext=document.getElementById('btnNext');
+const btnSound=document.getElementById('btnSound');
+
+btnSound.onclick = ()=>{ const on = AudioSys.toggleBg(); btnSound.textContent = on? '🔈 Silenciar' : '🔊 Música'; };
+
+btnRoll.onclick=()=>{
+  if(awaiting) return;
+  lastRoll = Math.floor(Math.random()*6)+1; rollNum.textContent = lastRoll;
+  leftToMove = lastRoll; awaiting = true; btnOpenQ.disabled=false;
+};
+
+btnNext.onclick=()=>{
+  turn = (turn+1) % teams.length;
+  if(teams[turn].skip){ alert(`${teams[turn].name} pierde su turno por penalización.`); teams[turn].skip=false; turn=(turn+1)%teams.length; }
+  lastRoll=null; leftToMove=0; rollNum.textContent='-'; awaiting=false;
+  btnOpenQ.disabled=true; btnResolve.disabled=true; render();
+};
+
+document.getElementById('btnApplyNames').onclick=()=>{
+  teams[0].name=document.getElementById('nameA').value||'Equipo A';
+  teams[1].name=document.getElementById('nameB').value||'Equipo B';
+  teams[2].name=document.getElementById('nameC').value||'Equipo C';
+  teams[3].name=document.getElementById('nameD').value||'Equipo D';
+  document.getElementById('bA').textContent=teams[0].name;
+  document.getElementById('bB').textContent=teams[1].name;
+  document.getElementById('bC').textContent=teams[2].name;
+  document.getElementById('bD').textContent=teams[3].name;
+  render();
+};
+
+/* ===== MODAL / PREGUNTAS ===== */
+const modal=document.getElementById('modal'), timerEl=document.getElementById('timer');
+const qTitle=document.getElementById('qTitle'), qMeta=document.getElementById('qMeta'), qText=document.getElementById('qText'), qFb=document.getElementById('qFb'), postRule=document.getElementById('postRule');
+const optA=document.getElementById('optA'), optB=document.getElementById('optB'), optC=document.getElementById('optC');
+const selProd=document.getElementById('selProd');
+document.getElementById('closeModal').onclick=()=>modal.style.display='none';
+let currentQ=null, currentKind='Pregunta';
+
+const flashPool=[
+  {Producto:"D&O", Pregunta:"Flash D&O: menciona una exclusión típica.", A:"Correcto",B:"Incorrecto",C:"Paso",Resp:"A",Fb:"Acierto:+2 | Error:-1"},
+  {Producto:"Crime", Pregunta:"Flash Crime: ¿suma asegurada máxima local usual?", A:"Correcto",B:"Incorrecto",C:"Paso",Resp:"A",Fb:"Acierto:+2 | Error:-1"},
+  {Producto:"Cyber", Pregunta:"Flash Cyber: da un ejemplo de error humano cubierto.", A:"Correcto",B:"Incorrecto",C:"Paso",Resp:"A",Fb:"Acierto:+2 | Error:-1"},
+  {Producto:"RC Profesional", Pregunta:"Flash RC: nombra una profesión excluida.", A:"Correcto",B:"Incorrecto",C:"Paso",Resp:"A",Fb:"Acierto:+2 | Error:-1"},
+];
+
+function startTimer(s){
+  clearInterval(timerId);
+  let t=s; timerEl.textContent=`${t}s`;
+  timerId=setInterval(()=>{ t--; timerEl.textContent=`${t}s`; if(t<=0){ clearInterval(timerId); finalizeAnswer(false,"Tiempo agotado."); }},1000);
+}
+function unlock(){ [optA,optB,optC].forEach(b=>{b.disabled=false;b.classList.remove('correct','wrong')}); qFb.textContent=''; }
+function lock(){ [optA,optB,optC].forEach(b=>b.disabled=true); }
+
+btnOpenQ.onclick=()=>{
+  const tm=teams[turn], track=tm.current, pos=tm.pos[track];
+  const target = Math.min(25, pos + leftToMove);
+  if(CASE_SLOTS.includes(target)) currentKind='Caso';
+  else if(AZAR_SLOTS.includes(target)) currentKind='Azar';
+  else if(INTER_SLOTS.includes(target)) currentKind='Intersección';
+  else currentKind='Pregunta';
+
+  selProd.innerHTML='';
+  if(currentKind==='Intersección'){
+    const alt=interPairs[track][target];
+    [track,alt].forEach(p=>{ const o=document.createElement('option');o.value=p;o.textContent=p; selProd.appendChild(o); });
+  } else {
+    const o=document.createElement('option'); o.value=track; o.textContent=track; selProd.appendChild(o);
+  }
+  selProd.onchange=()=>loadQuestion(target);
+  loadQuestion(target);
+
+  const t=parseInt(document.getElementById('inTimer').value||'45',10); startTimer(t);
+  modal.style.display='grid'; btnResolve.disabled=true;
+};
+
+function loadQuestion(target){
+  const tm=teams[turn], track=tm.current;
+  chosenProduct = selProd.value || track;
+  let q;
+  if(currentKind==='Caso'){
+    const cases=byProduct[chosenProduct].filter(x=>x.Categoria==="Caso");
+    q = cases.length? cases[(cur[chosenProduct]++)%cases.length] : nextQ(chosenProduct,true);
+    qTitle.textContent = `${chosenProduct} · Caso (Casilla ${target})`;
+    qMeta.textContent = 'Caso (vale doble avance si acierta, -2 si falla)';
+  } else if(currentKind==='Azar'){
+    const f=flashPool[Math.floor(Math.random()*flashPool.length)];
+    q = {Producto:f.Producto,Categoria:"Flash",Pregunta:f.Pregunta,A:f.A,B:f.B,C:f.C,Resp:f.Resp,Fb:f.Fb};
+    chosenProduct=f.Producto;
+    qTitle.textContent = `AZAR · ${chosenProduct} (Casilla ${target})`;
+    qMeta.textContent = 'Flash de respuesta libre, verificada por el moderador';
+  } else if(currentKind==='Intersección'){
+    q = nextQ(chosenProduct,false);
+    qTitle.textContent = `Intersección · ${track} ↔ ${interPairs[track][target]} (Casilla ${target})`;
+    qMeta.textContent = `Respondiendo por: ${chosenProduct}`;
+  } else {
+    q = nextQ(chosenProduct,false);
+    qTitle.textContent = `${chosenProduct} · Pregunta (Casilla ${target})`;
+    qMeta.textContent = q.Categoria;
+  }
+  document.getElementById('qText').textContent = q.Pregunta;
+  optA.textContent = `A) ${q.A}`; optB.textContent=`B) ${q.B}`; optC.textContent=`C) ${q.C}`;
+  unlock(); document.getElementById('qFb').textContent=''; document.getElementById('postRule').textContent = ruleText(currentKind);
+  // guardar la correcta en dataset para comparar:
+  optA.dataset.correct = (q.Resp==='A'); optB.dataset.correct=(q.Resp==='B'); optC.dataset.correct=(q.Resp==='C');
+}
+
+function ruleText(kind){
+  if(kind==='Caso') return 'Regla: si aciertan, además del movimiento por dado avanzan +'+leftToMove+' (doble). Si fallan, retroceden 2.';
+  if(kind==='Azar') return 'Regla: acierto +2 | error -1 (no aplica dado).';
+  if(kind==='Intersección') return 'Regla: si aciertan, pueden cambiar de camino. Si fallan, pierden el siguiente turno.';
+  return 'Regla: si aciertan, avanzan lo tirado; si fallan, retroceden 1.';
+}
+
+function choose(ansBtn){
+  clearInterval(timerId);
+  const ok = (ansBtn.dataset.correct==="true");
+  document.getElementById('qFb').textContent = (ok?'✅ Correcto':'❌ Respuesta incorrecta');
+  [optA,optB,optC].forEach(b=>{
+    const good = (b.dataset.correct==="true");
+    b.classList.toggle('correct',good);
+    b.classList.toggle('wrong',!good && b===ansBtn);
+    b.disabled=true;
+  });
+  ok ? AudioSys.success() : AudioSys.error();
+  document.getElementById('btnResolve').disabled=false;
+}
+optA.onclick=()=>choose(optA); optB.onclick=()=>choose(optB); optC.onclick=()=>choose(optC);
+
+/* ===== RESOLVER / EXPORT ===== */
+const results=[];
+function logResult(team,product,kind,ok,from,to,roll){
+  const ts=new Date().toISOString();
+  results.push({ts,team,product,kind,outcome:ok?'OK':'FAIL',from,to,roll});
+}
+document.getElementById('btnExport').onclick=()=>{
+  const header='timestamp,team,product,kind,outcome,from,to,roll\n';
+  const rows=results.map(r=>`${r.ts},${r.team},${r.product},${r.kind},${r.outcome},${r.from},${r.to},${r.roll??''}`).join('\n');
+  const blob=new Blob([header+rows],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='jumanji_fl_resultados.csv'; a.click(); URL.revokeObjectURL(url);
+};
+
+document.getElementById('btnResolve').onclick=()=>{
+  const tm=teams[turn], track=tm.current;
+  const pos=tm.pos[track];
+  const target=Math.min(25,pos+leftToMove);
+  const ok = document.getElementById('qFb').textContent.startsWith('✅');
+  if(currentKind==='Azar'){
+    tm.pos[track]= ok ? Math.min(25,pos+2) : Math.max(1,pos-1);
+    if(ok) tm.score+=1;
+  } else if(currentKind==='Caso'){
+    if(ok){ tm.pos[track]=target; tm.pos[track]=Math.min(25, tm.pos[track]+leftToMove); tm.score+=2; }
+    else{ tm.pos[track]=Math.max(1,pos-2); }
+  } else if(currentKind==='Intersección'){
+    if(ok){
+      const alt=interPairs[track][target];
+      tm.pos[track]=target;
+      if(confirm(`¡Correcto! ¿Quieres cambiar de camino a ${alt}?`)){ tm.current=alt; }
+      tm.score+=1;
+    } else { tm.skip=true; }
+  } else {
+    tm.pos[track]= ok ? target : Math.max(1,pos-1);
+    if(ok) tm.score+=1;
+  }
+  if(tm.pos[tm.current]>=25){ alert(`🏆 ${tm.name} llegó a la meta en ${tm.current}. ¡Ganaron!`); }
+  render();
+  logResult(teams[turn].name, (document.getElementById('selProd').value||track), currentKind, ok, pos, tm.pos[tm.current], lastRoll);
+  document.getElementById('modal').style.display='none';
+  document.getElementById('btnResolve').disabled=true;
+  document.getElementById('btnNext').disabled=false;
+};
+
+/* ===== INICIAL ===== */
+document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('btnOpenQ').disabled=true; });
+document.getElementById('closeModal').onclick=()=>document.getElementById('modal').style.display='none';
+</script>
+</body>
+</html>
